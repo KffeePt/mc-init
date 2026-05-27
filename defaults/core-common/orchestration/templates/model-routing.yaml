@@ -1,0 +1,62 @@
+# Orchestration model routing defaults
+# Update this template as vendor model names change.
+# Do not treat these aliases as immutable.
+
+tiers:
+  simple:
+    preferred: gemini-3.5-flash
+    label: Gemini 3.5 Flash
+    use_for:
+      - summaries
+      - extraction
+      - classification
+      - simple edits
+      - low-risk checks
+  medium:
+    preferred: gemini-3.1-pro
+    label: Gemini 3.1 Pro
+    use_for:
+      - moderate debugging
+      - multi-file review
+      - bounded refactors
+      - implementation planning with low blast radius
+  maximum:
+    preferred: gpt-5.5
+    label: GPT-5.5
+    use_for:
+      - hard debugging
+      - architecture arbitration
+      - security-sensitive work
+      - complex synthesis
+  planning:
+    preferred:
+      - claude-opus-4.7
+      - claude-opus-4.6
+    label: Claude Opus 4.6/4.7
+    use_for:
+      - decomposition
+      - architecture plans
+      - risk analysis
+      - design review
+
+workers:
+  antigravity:
+    kind: windows_gui_launcher
+    wsl_command: powershell.exe -NoProfile -Command "& 'C:\\Users\\santi\\AppData\\Local\\Programs\\Antigravity\\bin\\antigravity.cmd' '<path>'"
+    note: verified as VS Code-family launcher/MCP CLI, not verified as headless agent CLI
+  cursor:
+    kind: windows_gui_launcher
+    command: cursor
+    note: probe for Composer CLI before using as headless worker
+  gemini:
+    kind: cli_agent
+    command: gemini
+    note: preferred for simple/medium if CLI auth and model selection work
+  codex:
+    kind: cli_agent_fallback
+    command: codex
+    note: fallback when installed/authenticated; usually git repo + pty
+  opencode:
+    kind: cli_agent_optional
+    command: opencode
+    note: provider-agnostic fallback if installed/authenticated

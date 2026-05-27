@@ -1,0 +1,17 @@
+# Build artifacts
+versions/build-*/
+versions/current/init.zip
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets / keys (just in case)
+*.pem
+*.key
+.env
+
+# OS files
+.DS_Store
+Thumbs.db

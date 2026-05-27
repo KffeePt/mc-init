@@ -1,0 +1,165 @@
+version: 4
+name: xan-agent-self-update-policy
+canonical_shared_drawer: C:\Users\santi\Documents\Hermes\Shared Drawer
+agents:
+  Lazarus:
+    body_of: Wilson
+    role: controller
+    tailscale_ip: 100.119.118.63
+    authority:
+      - final_review
+      - shared_memory
+      - shared_soul
+      - core_common_skills
+      - comms_protocols
+      - init_bootstrap
+      - approved_command_execution
+      - approved_file_transfer
+  LilJon:
+    body_of: Arby
+    role: child_machine
+    hostname: desktop-mca3em3
+    tailscale_ip: 100.76.137.32
+    authority:
+      - local_observation
+      - local_adapted_skills
+      - candidate_reports
+      - subordinate_command_requests
+      - subordinate_file_transfer_requests
+default_shared_skills:
+  - plan-mode
+  - get-artifact
+  - storage-explorer
+  - file-organization
+  - image-gen
+  - git-gh
+  - meta-gateway
+  - omni-qa
+  - orchestration
+classes:
+  core-common:
+    child_import_default: true
+    controller_review_required: true
+  comms:
+    child_import_default: true
+    controller_review_required: true
+  init:
+    child_import_default: false
+    controller_only: true
+  local-adapted:
+    child_import_default: false
+    promotion_allowed: true
+    controller_review_required: true
+  private:
+    child_import_default: false
+    promotion_allowed: false
+    never_sync: true
+submission_paths:
+  candidates: C:\Users\santi\Documents\Hermes\Shared Drawer\Incoming\<AgentName>\
+  controller_outgoing: C:\Users\santi\Documents\Hermes\Shared Drawer\Outgoing\Lazarus\
+  protocols: C:\Users\santi\Documents\Hermes\Shared Drawer\Protocols\
+init_protocol:
+  bootstrap_archive_name: init.zip
+  user_instruction: read init_prompt.md and do whatever it says.
+  controller_update_auth:
+    manifest: controller_update.json
+    signature: controller_update.sig
+    allowed_signers: controllers/lazarus_allowed_signers
+    namespace: hermes-init-update
+    verify_command: py .\init.py verify-controller-update --manifest .\controller_update.json --signature .\controller_update.sig
+    fail_closed_for_privileged_actions: true
+  flow:
+    - receive_init_zip_from_xan_or_lazarus
+    - extract_and_read_init_prompt_md
+    - verify_controller_update_or_get_explicit_xan_override
+    - transplant_child_safe_skills_preferences_scripts_plugin_notes_shared_memory_seeds_sync_policy_and_message_contract
+    - run_or_request_admin_init_py_to_implant_lazarus_public_ssh_key
+    - verify_windows_ssh_acls_tailscale_ports_and_optional_wsl_ssh
+    - collect_situational_awareness_maps_system_tests_and_comms_state
+    - create_init_res_zip_for_xan_to_send_to_lazarus
+    - controller_verifies_access_and_imports_compact_facts
+  allowed_ssh_material:
+    - controller_public_key
+    - public_key_fingerprint
+    - authorized_keys_presence_status
+    - authorized_keys_acl_report
+  forbidden_ssh_material:
+    - private_keys
+    - raw_identity_files
+    - passphrases
+situational_awareness:
+  return_bundle: init_res.zip
+  required_files: [situational_awareness.json, windows_verify.txt, controller_ingest.md]
+  means:
+    - drive_roots_and_capacity
+    - bounded_path_maps
+    - content_type_distribution
+    - installed_program_inventory
+    - json_registries
+    - subordinate_only_service_network_state
+  forbidden: [secrets, private_keys, raw_env, browser_profiles, raw_memory_dumps]
+meta_gateway:
+  hierarchy:
+    human_owner: Xan
+    main_controller: Wilson/Lazarus
+    subordinates:
+      - Arby/LilJon
+  rule: all ssh_scp_command_execution_file_transfer_registry_update_and_comms_state_changes_route_through_the_meta_gateway
+  required_envelope_fields: [request_id, origin_agent, target_agent, operation_type, intent, scope, risk_level, approval_source, expected_output, rollback_or_stop_condition, secrets_policy]
+  operation_types: [command, file_transfer, registry_update, status_report, artifact_handoff]
+  controller_only:
+    - canonical_registry_writes
+    - shared_memory_edits
+    - shared_skill_promotion
+    - signed_init_updates
+    - destructive_or_security_sensitive_orchestration
+  subordinate_allowed:
+    - local_observation
+    - local_verification
+    - scoped_setup_commands
+    - artifact_creation
+    - candidate_registry_reports
+  approval_required_for:
+    - destructive_commands
+    - credential_export
+    - private_key_transfer
+    - raw_env_transfer
+    - browser_profile_transfer
+    - public_firewall_exposure_changes
+    - persistence_or_autostart_changes
+    - subordinate_canonical_registry_overwrite
+command_and_file_transfer_policy:
+  user_authorized_scope:
+    - setup
+    - verification
+    - artifact_handoff
+    - logs_and_reports
+    - shared_drawer_sync
+    - explicit_user_requested_operations
+  subordinate_requests_allowed: true
+  required_fields_for_file_transfer: [source, destination, purpose, overwrite_expected]
+  required_fields_for_command_execution: [target_machine, command_intent, expected_output, risk_level]
+  allowed_transports: [ssh, sftp, scp, rsync_over_ssh, tailscale_taildrop]
+  explicit_xan_approval_required_for:
+    - destructive_commands
+    - credential_export
+    - private_key_transfer
+    - raw_env_transfer
+    - browser_profile_transfer
+    - firewall_public_exposure_changes
+    - persistence_or_autostart_changes
+conflict_policy:
+  shared_memory: Lazarus wins after review
+  shared_soul: Lazarus wins after review
+  core_common_skills: Lazarus wins
+  comms_protocols: Lazarus wins
+  local_adapted_skills: local agent wins unless promoted
+  private: never_sync
+forbidden:
+  - raw_env_files
+  - private_keys
+  - api_tokens
+  - browser_profiles
+  - raw_memory_dumps
+  - blind_bidirectional_sync
+  - child_overwrites_controller_state
