@@ -9,7 +9,7 @@ init/
   init_prompt.md          # first-class control prompt for laptop Hermes agent
   README.md               # this file
   src/                    # initializer implementation
-  skills/                 # child-safe common skills only
+  skills/                 # child-safe common skills, including media defaults
   memories/               # Xan preference seed memory
   seeds/                  # SOUL, sync policy, message contract
   docs/                   # package notes
@@ -23,7 +23,7 @@ init/
 - The main machine is the only machine that owns reusable init/bootstrap skills.
 - Child agents receive `core-common` and `comms` material only.
 - This package can initialize the laptop, but it does not turn the laptop into an init authority.
-- `get-artifact`, `plan-mode`, `storage-explorer`, `image-gen`, and `meta-gateway` are default child-safe common skills.
+- `get-artifact`, `plan-mode`, `storage-explorer`, `image-gen`, `meta-gateway`, and media acquisition skills (`get-movie`, `get-show`, `get-music`) are default child-safe common skills. The package also carries `media-shared` helper code used by those media skills.
 
 
 ## Canonical setup protocol
@@ -57,7 +57,7 @@ This will:
 - back up existing `C:\ProgramData\ssh\administrators_authorized_keys`
 - replace `administrators_authorized_keys` with Lazarus's Ed25519 controller public key
 - harden ACLs to `Administrators:F` and `SYSTEM:F` only
-- install child-safe seed files and common skills, including storage-explorer, image-gen, and meta-gateway
+- install child-safe seed files and common skills, including storage-explorer, image-gen, meta-gateway, and media acquisition skills
 
 Important: this deliberately uses the Windows admin OpenSSH key file, not `%USERPROFILE%\.ssh\authorized_keys`, because LilJon's Windows account is admin-class and sshd may ignore per-user keys.
 

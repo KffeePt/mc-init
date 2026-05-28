@@ -55,6 +55,10 @@ cp "$REPO_ROOT/protocol/"* "$INIT_DIR/protocol/" 2>/dev/null || true
 # Create empty init trigger file
 touch "$INIT_DIR/init"
 
+# Remove generated junk before hashing/packaging
+find "$INIT_DIR" -type d -name '__pycache__' -prune -exec rm -rf {} +
+find "$INIT_DIR" -type f \( -name '*.pyc' -o -name '*.pyo' -o -name '*.bak' \) -delete
+
 # Create controller update manifest
 CURRENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 SHA256=$(find "$INIT_DIR" -type f -exec sha256sum {} \; | sort -k2 | sha256sum | cut -d' ' -f1)
@@ -75,7 +79,10 @@ cat > "$INIT_DIR/controller_update.json" << EOF
     "omni-qa",
     "orchestration",
     "plan-mode",
-    "storage-explorer"
+    "storage-explorer",
+    "get-movie",
+    "get-show",
+    "get-music"
   ],
   "scope": "Update default skills and seeds for child agent bootstrap"
 }

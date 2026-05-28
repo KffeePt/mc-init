@@ -76,7 +76,7 @@ Any cross-agent operation must carry a request envelope with: request ID, origin
 - The main machine is the only machine that owns reusable init/bootstrap skills.
 - This laptop may run this one-time initializer package only when sent or approved by Xan or Lazarus.
 - Do not copy or create reusable init skills on the laptop.
-- Install only child-safe common/comms material: preferences, SOUL seed, plan-mode, get-artifact, storage-explorer, image-gen, meta-gateway, sync policy, and message contract.
+- Install only child-safe common/comms material: preferences, SOUL seed, plan-mode, get-artifact, storage-explorer, image-gen, meta-gateway, media acquisition skills (`get-movie`, `get-show`, `get-music`), sync policy, and message contract.
 - Do not expose SSH to the public internet.
 - Prefer Tailscale/private network access.
 - Do not print secrets, tokens, private keys, cookies, or raw credential files.

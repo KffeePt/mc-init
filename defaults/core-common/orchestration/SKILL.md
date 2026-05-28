@@ -102,7 +102,7 @@ Use memory only for compact routing preferences that should influence future ses
 
 For Hermes child-agent/laptop bootstrap work, the main/controller machine owns reusable init/bootstrap authority. Child machines may run a one-time extracted init package, but they should not receive reusable init skills by default.
 
-Default child-safe imports are `plan-mode`, `get-artifact`, `storage-explorer`, `file-organization`, `omni-qa`, `image-gen`, `meta-gateway`, generic `SOUL.md`, Xan preference seed memory, sync policy, and agent message contract. Do not copy private keys, raw `.env` files, raw memory dumps, or another machine's `local-adapted`/`private` skills into child seeds.
+Default child-safe imports are `plan-mode`, `get-artifact`, `storage-explorer`, `file-organization`, `omni-qa`, `image-gen`, `meta-gateway`, `get-movie`, `get-show`, `get-music`, generic `SOUL.md`, Xan preference seed memory, sync policy, and agent message contract. Do not copy private keys, raw `.env` files, raw memory dumps, or another machine's `local-adapted`/`private` skills into child seeds.
 
 Preferred one-time init bundle layout:
 

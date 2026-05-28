@@ -43,6 +43,10 @@ Hermes/Init/                    # mc-init repo root
 │   ├── omni-qa/
 │   ├── orchestration/
 │   ├── plan-mode/
+│   ├── get-movie/
+│   ├── get-show/
+│   ├── get-music/
+│   ├── media-shared/           # shared media_search.py + lib for media skills
 │   └── storage-explorer/
 ├── scripts/                    # Build/publish scripts
 │   ├── build-init.sh           # Build init.zip from current state
@@ -114,6 +118,9 @@ The following skills are included in every child-agent bootstrap by default:
 | `orchestration` | Multi-Agent | Work routing across agents |
 | `plan-mode` | Software Dev | Plan-before-execute workflow |
 | `storage-explorer` | Productivity | Omni-utility storage management |
+| `get-movie` | Media | Movie search/download workflow plus smart movie flatten/review architecture |
+| `get-show` | Media | Show search/download workflow plus qBittorrent flatten/review hooks |
+| `get-music` | Media | Music search/download workflow |
 
 ## Version Management
 
@@ -147,7 +154,7 @@ git push origin main
 
 ## Verification Checklist
 
-- [ ] All default skills are present in `defaults/core-common/`
+- [ ] All default skills are present in `defaults/core-common/`, including media defaults
 - [ ] `init_prompt.md` is up to date with current protocol
 - [ ] `init.py` compiles cleanly
 - [ ] `controllers/lazarus_allowed_signers` contains current controller public key

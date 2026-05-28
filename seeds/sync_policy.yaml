@@ -36,6 +36,9 @@ default_shared_skills:
   - meta-gateway
   - omni-qa
   - orchestration
+  - get-movie
+  - get-show
+  - get-music
 classes:
   core-common:
     child_import_default: true

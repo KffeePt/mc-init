@@ -1,10 +1,10 @@
 # Default Skill Roadmap
 
-Last updated: 2026-05-27
+Last updated: 2026-05-28
 Owner: Wilson / Lazarus
 Repo: mc-init
 
-## Current Default Skills (v1.0)
+## Current Default Skills (v1.1)
 
 | # | Skill | Status | Version | Category |
 |---|---|---|---|---|
@@ -17,6 +17,9 @@ Repo: mc-init
 | 7 | `meta-gateway` | Stable | 1.0.0 | Multi-Agent |
 | 8 | `omni-qa` | Stable | 1.0.0 | Quality |
 | 9 | `orchestration` | Stable | 1.0.0 | Multi-Agent |
+| 10 | `get-movie` | Stable | 1.0.0 | Media |
+| 11 | `get-show` | Stable | 1.0.0 | Media |
+| 12 | `get-music` | Stable | 1.0.0 | Media |
 
 ## Roadmap
 
@@ -33,7 +36,6 @@ Repo: mc-init
 | Skill | Priority | Rationale |
 |---|---|---|
 | `obsidian` | Medium | Shared vault management for cross-agent knowledge |
-| `media-transcoding-ffmpeg` | Low | Media processing distributed to capable child nodes |
 | `huggingface-hub` | Low | ML model access from child agents with GPU |
 
 ### Backlog (Deferred)
@@ -69,6 +71,7 @@ A skill should be a default only if:
 
 | Date | Change | Author |
 |---|---|---|
+| 2026-05-28 | Added media acquisition defaults: `get-movie`, `get-show`, `get-music`; included shared media library in init package | Wilson |
 | 2026-05-27 | Initial roadmap; added `git-gh` as default | Wilson |
 | 2026-05-26 | Upgraded `storage-explorer` to v2.2.0 (omni-utility) | Wilson |
 | 2026-05-25 | Added `file-organization`, `omni-qa`, `orchestration` as defaults | Wilson |

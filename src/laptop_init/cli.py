@@ -58,6 +58,9 @@ default_shared_skills:
   - storage-explorer
   - image-gen
   - meta-gateway
+  - get-movie
+  - get-show
+  - get-music
 classes:
   core-common:
     child_import_default: true
@@ -333,6 +336,20 @@ class SeedInstaller:
         bundled = package_root / 'skills' / 'core-common'
         if not bundled.exists():
             return
+        category_map = {
+            'git-gh': 'software-development',
+            'plan-mode': 'software-development',
+            'get-artifact': 'productivity',
+            'storage-explorer': 'productivity',
+            'file-organization': 'productivity',
+            'meta-gateway': 'autonomous-ai-agents',
+            'orchestration': 'autonomous-ai-agents',
+            'omni-qa': 'software-development',
+            'image-gen': 'creative',
+            'get-movie': 'media',
+            'get-show': 'media',
+            'get-music': 'media',
+        }
         for skill_dir in bundled.iterdir():
             skill_md = skill_dir / 'SKILL.md'
             if not skill_md.exists():
@@ -340,11 +357,28 @@ class SeedInstaller:
             skill_name = skill_dir.name
             if skill_name in {'plan-mode', 'get-artifact'}:
                 continue
-            target = self.hermes_home / 'skills' / 'productivity' / skill_name
+            category = category_map.get(skill_name, 'productivity')
+            target = self.hermes_home / 'skills' / category / skill_name
             if target.exists():
                 shutil.rmtree(target)
             shutil.copytree(skill_dir, target)
             print(f'Installed bundled common skill {skill_name} -> {target}')
+        media_shared = bundled / 'media-shared'
+        if media_shared.exists():
+            target = self.hermes_home / 'skills' / 'media'
+            target.mkdir(parents=True, exist_ok=True)
+            for child in media_shared.iterdir():
+                dst = target / child.name
+                if dst.exists():
+                    if dst.is_dir():
+                        shutil.rmtree(dst)
+                    else:
+                        dst.unlink()
+                if child.is_dir():
+                    shutil.copytree(child, dst)
+                else:
+                    shutil.copy2(child, dst)
+                print(f'Installed bundled media shared component {child.name} -> {dst}')
 
 
 class WindowsOpenSshBootstrapper:
@@ -795,6 +829,31 @@ EOF_PLAN
 cat > ~/.hermes/skills/productivity/get-artifact/SKILL.md <<'EOF_ARTIFACT'
 {GET_ARTIFACT_SKILL}
 EOF_ARTIFACT
+if [ -d ./skills/core-common ]; then
+  for skill in ./skills/core-common/*; do
+    [ -d "$skill" ] || continue
+    name="$(basename "$skill")"
+    [ -f "$skill/SKILL.md" ] || continue
+    case "$name" in
+      git-gh|plan-mode|omni-qa) category="software-development" ;;
+      get-artifact|storage-explorer|file-organization) category="productivity" ;;
+      meta-gateway|orchestration) category="autonomous-ai-agents" ;;
+      image-gen) category="creative" ;;
+      get-movie|get-show|get-music) category="media" ;;
+      *) category="productivity" ;;
+    esac
+    if [ "$name" = "plan-mode" ] || [ "$name" = "get-artifact" ]; then continue; fi
+    mkdir -p "$HOME/.hermes/skills/$category"
+    rm -rf "$HOME/.hermes/skills/$category/$name"
+    cp -R "$skill" "$HOME/.hermes/skills/$category/$name"
+  done
+  if [ -d ./skills/core-common/media-shared ]; then
+    mkdir -p "$HOME/.hermes/skills/media"
+    cp -R ./skills/core-common/media-shared/* "$HOME/.hermes/skills/media/"
+  fi
+else
+  printf 'Bundled common skills not found in current directory; extracted init package skills were not copied.\n'
+fi
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
 hermes doctor || true
 printf '\nChild seed complete. Init authority was not installed on this node.\n'
