@@ -20,8 +20,11 @@ class QBittorrentClient:
         self.port = port
         self.username = username or os.getenv("QBITTORRENT_USERNAME") or os.getenv("QBT_USERNAME") or ""
         self.password = password or os.getenv("QBITTORRENT_PASSWORD") or os.getenv("QBT_PASSWORD") or ""
-        if not self.username or not self.password:
-            raise RuntimeError("qBittorrent credentials missing. Set QBITTORRENT_USERNAME and QBITTORRENT_PASSWORD in the local environment or pass them explicitly.")
+        # qBittorrent can be configured to bypass Web UI auth for localhost.
+        # On Xan's Windows host this is the active setup; the PowerShell bridge
+        # runs natively on Windows localhost, so unauthenticated local API calls
+        # are valid. If credentials are present, use them. Otherwise try the
+        # local bypass instead of failing before the request is attempted.
 
     @property
     def base_url(self) -> str:
@@ -55,26 +58,41 @@ class QBittorrentClient:
         login_body_ps = "$loginBody = @{username='" + self.username + "'; password='" + self.password + "'}\n"
 
         if body_var:
-            ps_cmd = (
-                "$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession\n"
-                + login_body_ps +
-                "$r = Invoke-WebRequest -Uri '" + login_url + "' `\n"
-                "    -Method POST -Body $loginBody -WebSession $session -UseBasicParsing -ErrorAction Stop\n"
-                + body_var + "\n"
-                "$r2 = Invoke-WebRequest -Uri '" + api_url + "' `\n"
-                "    -Method POST -Body $body -WebSession $session -UseBasicParsing -ErrorAction Stop\n"
-                "[Console]::Out.Write($r2.Content)\n"
-            )
+            if self.username and self.password:
+                ps_cmd = (
+                    "$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession\n"
+                    + login_body_ps +
+                    "$r = Invoke-WebRequest -Uri '" + login_url + "' `\n"
+                    "    -Method POST -Body $loginBody -WebSession $session -UseBasicParsing -ErrorAction Stop\n"
+                    + body_var + "\n"
+                    "$r2 = Invoke-WebRequest -Uri '" + api_url + "' `\n"
+                    "    -Method POST -Body $body -WebSession $session -UseBasicParsing -ErrorAction Stop\n"
+                    "[Console]::Out.Write($r2.Content)\n"
+                )
+            else:
+                ps_cmd = (
+                    body_var + "\n"
+                    "$r2 = Invoke-WebRequest -Uri '" + api_url + "' `\n"
+                    "    -Method POST -Body $body -UseBasicParsing -ErrorAction Stop\n"
+                    "[Console]::Out.Write($r2.Content)\n"
+                )
         else:
-            ps_cmd = (
-                "$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession\n"
-                + login_body_ps +
-                "$r = Invoke-WebRequest -Uri '" + login_url + "' `\n"
-                "    -Method POST -Body $loginBody -WebSession $session -UseBasicParsing -ErrorAction Stop\n"
-                "$r2 = Invoke-WebRequest -Uri '" + api_url + "' `\n"
-                "    -WebSession $session -UseBasicParsing -ErrorAction Stop\n"
-                "[Console]::Out.Write($r2.Content)\n"
-            )
+            if self.username and self.password:
+                ps_cmd = (
+                    "$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession\n"
+                    + login_body_ps +
+                    "$r = Invoke-WebRequest -Uri '" + login_url + "' `\n"
+                    "    -Method POST -Body $loginBody -WebSession $session -UseBasicParsing -ErrorAction Stop\n"
+                    "$r2 = Invoke-WebRequest -Uri '" + api_url + "' `\n"
+                    "    -WebSession $session -UseBasicParsing -ErrorAction Stop\n"
+                    "[Console]::Out.Write($r2.Content)\n"
+                )
+            else:
+                ps_cmd = (
+                    "$r2 = Invoke-WebRequest -Uri '" + api_url + "' `\n"
+                    "    -UseBasicParsing -ErrorAction Stop\n"
+                    "[Console]::Out.Write($r2.Content)\n"
+                )
 
         try:
             result = subprocess.run(

@@ -1,9 +1,9 @@
 {
-  "version": "2026-05-28-helpers-screenshot",
-  "built_at": "2026-05-29T08:43:45Z",
+  "version": "2026-05-29-path-first-media-watchers",
+  "built_at": "2026-05-29T14:35:54Z",
   "builder": "Wilson/Lazarus",
   "repo": "mc-init",
-  "content_hash": "8c7c13f352833a2cfb7baa38d629a5685b441eef547f6920dcb5e7ab92658872",
+  "content_hash": "b8b1484394f18fde214886690323e1a18e3dd235c01a9459c40c27f971427368",
   "default_skills": [
     "file-organization",
     "get-artifact",

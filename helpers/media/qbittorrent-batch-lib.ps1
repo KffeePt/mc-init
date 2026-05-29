@@ -9,9 +9,8 @@ $script:HermesQbMutexName = "Global\HermesQbittorrentBatchRegistry"
 $script:HermesQbBase = if ($env:QBITTORRENT_BASE_URL) { $env:QBITTORRENT_BASE_URL } else { "http://localhost:8080/api/v2" }
 $script:HermesQbUsername = $env:QBITTORRENT_USERNAME
 $script:HermesQbPassword = $env:QBITTORRENT_PASSWORD
-if ([string]::IsNullOrWhiteSpace($script:HermesQbUsername) -or [string]::IsNullOrWhiteSpace($script:HermesQbPassword)) {
-    throw "Set QBITTORRENT_USERNAME and QBITTORRENT_PASSWORD before using this helper."
-}
+# Credentials are optional when qBittorrent is configured to bypass Web UI auth
+# for Windows localhost. Invoke-HermesQbApi logs in only when both env vars exist.
 $script:HermesQbWaitThresholdSeconds = 600
 $script:HermesQbMinimumBatchSizeBytes = 2GB
 $script:HermesQbMaxScanIntervalSeconds = 3600
@@ -373,12 +372,18 @@ function Write-HermesRegistry($Registry) {
 }
 
 function Invoke-HermesQbApi([string]$Endpoint, [hashtable]$Body = $null) {
-    $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-    Invoke-WebRequest -Uri "$script:HermesQbBase/auth/login" -Method POST -Body @{username=$script:HermesQbUsername; password=$script:HermesQbPassword} -WebSession $session -UseBasicParsing -ErrorAction Stop | Out-Null
-    if ($Body) {
-        return Invoke-WebRequest -Uri "$script:HermesQbBase/$Endpoint" -Method POST -Body $Body -WebSession $session -UseBasicParsing -ErrorAction Stop
+    $useAuth = -not [string]::IsNullOrWhiteSpace($script:HermesQbUsername) -and -not [string]::IsNullOrWhiteSpace($script:HermesQbPassword)
+    $session = $null
+    if ($useAuth) {
+        $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+        Invoke-WebRequest -Uri "$script:HermesQbBase/auth/login" -Method POST -Body @{username=$script:HermesQbUsername; password=$script:HermesQbPassword} -WebSession $session -UseBasicParsing -ErrorAction Stop | Out-Null
     }
-    return Invoke-WebRequest -Uri "$script:HermesQbBase/$Endpoint" -WebSession $session -UseBasicParsing -ErrorAction Stop
+    if ($Body) {
+        if ($useAuth) { return Invoke-WebRequest -Uri "$script:HermesQbBase/$Endpoint" -Method POST -Body $Body -WebSession $session -UseBasicParsing -ErrorAction Stop }
+        return Invoke-WebRequest -Uri "$script:HermesQbBase/$Endpoint" -Method POST -Body $Body -UseBasicParsing -ErrorAction Stop
+    }
+    if ($useAuth) { return Invoke-WebRequest -Uri "$script:HermesQbBase/$Endpoint" -WebSession $session -UseBasicParsing -ErrorAction Stop }
+    return Invoke-WebRequest -Uri "$script:HermesQbBase/$Endpoint" -UseBasicParsing -ErrorAction Stop
 }
 
 function Get-HermesQbTorrents([string]$LogFile = $script:HermesQbFinishedLog) {
@@ -542,7 +547,11 @@ function Remove-HermesQbTorrentsKeepFiles([string[]]$Hashes, [string]$LogFile = 
 
 function Get-HermesCleanFileName([string]$Name) {
     $clean = $Name
-    $clean = $clean -replace '(?i)(?:https?://\S+|www\.[a-z0-9][a-z0-9\-]*(?:\.[a-z0-9][a-z0-9\-]*)+\b|(?:eztvx?|rarbg|uindex|torrentgalaxy|tgx|torrentcouch)\.[a-z]{2,}\b)(?:\s*[-_.]\s*)?', ''
+    # Strip explicit tracker domains, but do not treat release-group names before
+    # normal sidecar extensions as domains. Example: `Movie-RARBG.idx` must keep
+    # `.idx`; older pattern matched `RARBG.idx` and produced an extensionless
+    # sidecar collision during movie flattening.
+    $clean = $clean -replace '(?i)(?:https?://\S+|www\.[a-z0-9][a-z0-9\-]*(?:\.[a-z0-9][a-z0-9\-]*)+\b|(?:eztvx?|uindex|torrentgalaxy|tgx|torrentcouch)\.[a-z]{2,}\b)(?:\s*[-_.]\s*)?', ''
     $clean = $clean -replace '\[.*?\]', ''
     $clean = $clean -replace '[ _.-]{3,}', ' '
     $clean = $clean -replace '\s+', ' '

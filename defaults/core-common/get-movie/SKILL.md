@@ -68,9 +68,11 @@ if os.path.exists(MOVIES_DIR):
 ```
 
 **Rules:**
-- Always run this check FIRST before any network request
-- If a match is found, report it and **ask before proceeding**
+- Always run this check FIRST before any network request.
+- For every recommendation or planned download, explicitly state whether that title was found in `D:\\Movies\\` or not found. Do not imply a title is missing without showing the library-check result.
+- If a match is found, report it and **ask before proceeding**.
 - For batch requests, also check normalized-title duplicate suspects at the movie root before adding new downloads; malformed folder names can hide duplicates, e.g. `Title (Year)` versus `Title( (Year)`.
+- Before presenting recommendations, verify each recommended title is not already in the library. This applies to adjacent/franchise/completionist suggestions too, not just the originally requested title.
 - If Xan already has 4K/1080p, don't waste bandwidth on a downgrade
 
 ---
@@ -114,6 +116,12 @@ Results are merged, deduplicated by info hash, filtered for movie-type content (
 
 ## Step 2 — Present Options to Xan
 
+Choose the presentation depth based on request shape:
+
+- **Single-title request:** show concrete torrent/release options before downloading unless Xan explicitly asked for automatic selection. Include source, trust signal, quality, size, seed/leech counts, and reject notes for risky entries.
+- **Batch / many-title request:** explain the broad acquisition options first — e.g. core franchise vs adjacent/completionist set, quality policy, skip rules, and what will not be downloaded. Then either ask for scope or, if Xan gave explicit scope and quality constraints, auto-select conservative 1080p reasonable-size releases and summarize the picks.
+- **Recommendations / adjacent titles:** explicitly verify each recommended title against `D:\\Movies\\` before recommending or queueing it. State `present`, `missing`, or `duplicate suspect` for each.
+
 The script outputs formatted results. Present them clearly:
 
 ```
@@ -152,7 +160,9 @@ After presenting, **ask Xan which option (#) to download**, or offer to auto-sel
 
 #### ⚠️ WSL CRITICAL: Use PowerShell Bridge
 
-**From WSL, `curl` (and even `curl.exe`) CANNOT authenticate to qBittorrent.** The CSRF protection rejects cross-origin requests from the WSL network namespace. The ONLY working approach from WSL is the PowerShell bridge.
+**From WSL, `curl` (and even `curl.exe`) CANNOT authenticate to qBittorrent.** The CSRF protection rejects cross-origin requests from the WSL network namespace. The working approach from WSL is the PowerShell bridge.
+
+If qBittorrent is configured to bypass Web UI auth for Windows localhost, credentials may be absent. In that setup, native `powershell.exe` calls to `http://localhost:8080/api/v2/...` can succeed without login, while WSL-side clients fail if they require credentials before attempting the local request. Prefer the shared Python client after the 2026-05-29 fix; it tries credentialed login when credentials exist and falls back to Windows-local unauthenticated API calls otherwise.
 
 #### 🔄 RECOMMENDED: Auto-Watch Workflow (Batch Completion Detection)
 
@@ -171,9 +181,14 @@ python3 /home/xantastique/.hermes/scripts/add_and_watch.py \
 - Spawns a background watcher process for the entire batch
 - Watcher polls every 5 minutes for completion
 - When ALL torrents in batch are 100%:
+  - Resolves the real media root from qBittorrent `save_path` / `content_path`, not fuzzy torrent-title matching
+  - Extracts Plex-style identity from folder conventions (`Movie Title (Year)`) and logs it before scan/flatten
   - Scans files for malware (extension + size heuristics)
+  - Runs smart flatten on the resolved movie roots so wrapper folders are collapsed before Plex refresh
   - Triggers Plex library refresh
   - Exits automatically (no polling forever)
+
+**Metadata/matching rule:** Prefer qBittorrent path + Plex naming conventions over IMDb-style title guessing for post-download organization. IMDb/Cinemagoer lookups are useful for franchise/gap analysis, but completion flattening should not depend on external title resolution. Plex-like matching is: library root + `Title (Year)` parent folder for movies; title/year + `S##E##` for shows.
 
 **Advantages:**
 - Event-driven: only runs when downloads are added
@@ -311,6 +326,8 @@ For completed movie torrents under `D:\Movies\<Movie Title (Year)>\`:
 `C:\Users\santi\Desktop\WILSON_Hash_Verify.bat` is a legacy alias for the same smart organizer; it is no longer hash-only.
 
 The movie flattener uses `Move-Item`, then falls back to `Copy-Item` if Windows/qBittorrent/Plex still holds a read handle. If source cleanup is locked, it logs `MOVIE SOURCE REMOVE DEFERRED` and leaves the source wrapper for a later pass instead of lying about success.
+
+**Sidecar filename pitfall:** release-group names before subtitle extensions must not be stripped as tracker domains. `Movie-RARBG.idx` and `Movie-RARBG.sub` are valid sidecars; if a cleaner strips `RARBG.idx` as a fake domain it can create extensionless files and bogus review collisions. Preserve `.idx`/`.sub` and verify `D:\\Review\\current\\review.yaml` stays at `open_count: 0` unless there is a real media collision.
 
 ---
 
