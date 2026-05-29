@@ -163,3 +163,8 @@ git push origin main
 - [ ] No secrets in `seeds/`, `defaults/`, or `versions/`
 - [ ] Git remote `mc-init` is configured and reachable
 - [ ] `ROADMAP.md` reflects current priorities
+
+
+## Helper Convention
+
+Reusable copied scripts are called **helpers** and live under `C:\Users\santi\Documents\Hermes\helpers\<skill-or-domain>\`. `init.zip` includes a top-level `helpers/` directory and the initializer installs those helpers into the child machine Documents Hermes helper root. Skill-bundled scripts may still exist for portability, but user/agent executable copies should be staged here.

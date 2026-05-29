@@ -1,9 +1,9 @@
 {
-  "version": "2026-05-28-media-defaults-v2",
-  "built_at": "2026-05-28T19:28:49Z",
+  "version": "2026-05-28-helpers-screenshot",
+  "built_at": "2026-05-29T08:43:45Z",
   "builder": "Wilson/Lazarus",
   "repo": "mc-init",
-  "content_hash": "aa2f7259b225155eba045f0623cc641f5ef9f149104a7cf61bdb7d90e2492a14",
+  "content_hash": "8c7c13f352833a2cfb7baa38d629a5685b441eef547f6920dcb5e7ab92658872",
   "default_skills": [
     "file-organization",
     "get-artifact",
@@ -16,7 +16,8 @@
     "storage-explorer",
     "get-movie",
     "get-show",
-    "get-music"
+    "get-music",
+    "screenshot"
   ],
   "scope": "Update default skills and seeds for child agent bootstrap"
 }

@@ -27,6 +27,16 @@ This file is the shared initialization note for this Hermes workspace. It captur
 
 ## Written Output Style
 
+Default response format unless Xan requests otherwise:
+
+1. `Plan`
+2. `Clarification Questions` — only when ambiguous and no reliable way to verify truth with tools
+3. `Tools`
+4. `Work Done`
+5. `Remaining Work / Technical Debt`
+6. `TTS summary`
+7. `TTS audio / artifacts`
+
 - Compact bullets over dense paragraphs.
 - Short labels before details:
   - `Changed:`
@@ -93,15 +103,15 @@ Common purpose folders:
 - `Config`
 - `Responses`
 - `Skills`
-- `Scripts`
+- `helpers`
 
-Scripts convention:
+Helpers convention:
 
 ```text
-Hermes/Scripts/<ScriptPurpose>.<ext>
+Hermes/helpers/<skill-or-domain>/<HelperPurpose>.<ext>
 ```
 
-Use `Scripts` for reusable helper scripts and one-time scripts worth keeping. Each script should include a header with purpose, date, expected inputs, side effects, and safety notes.
+Any reusable script meant for copying or user/agent execution is called a **helper** and should live under `Hermes/helpers`, organized by skill or domain. Skill bundles may still contain `scripts/` or `templates/` internally for portability, but the explicit user/agent-ready copy belongs in `helpers/`.
 
 ## Configuration Storage Policy
 

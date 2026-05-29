@@ -10,6 +10,7 @@ init/
   README.md               # this file
   src/                    # initializer implementation
   skills/                 # child-safe common skills, including media defaults
+  helpers/                # reusable copied helpers organized by skill/domain
   memories/               # Xan preference seed memory
   seeds/                  # SOUL, sync policy, message contract
   docs/                   # package notes
@@ -23,7 +24,7 @@ init/
 - The main machine is the only machine that owns reusable init/bootstrap skills.
 - Child agents receive `core-common` and `comms` material only.
 - This package can initialize the laptop, but it does not turn the laptop into an init authority.
-- `get-artifact`, `plan-mode`, `storage-explorer`, `image-gen`, `meta-gateway`, and media acquisition skills (`get-movie`, `get-show`, `get-music`) are default child-safe common skills. The package also carries `media-shared` helper code used by those media skills.
+- `get-artifact`, `plan-mode`, `storage-explorer`, `image-gen`, `screenshot`, `meta-gateway`, and media acquisition skills (`get-movie`, `get-show`, `get-music`) are default child-safe common skills. The package also carries top-level `helpers/` and `media-shared` helper code used by those skills.
 
 
 ## Canonical setup protocol
@@ -36,7 +37,7 @@ Flow:
 2. Xan tells it: `read init_prompt.md and do whatever it says.`
 3. Agent extracts the archive and reads `init/init_prompt.md`.
 4. Agent verifies any controller-authored update with `py .\init.py verify-controller-update --manifest .\controller_update.json --signature .\controller_update.sig`.
-5. Agent transplants child-safe skills, including meta-gateway, plus preferences, helper scripts, plugin/config notes if present, shared seed memories, sync policy, and message contract.
+5. Agent transplants child-safe skills, including meta-gateway, plus preferences, helpers, plugin/config notes if present, shared seed memories, sync policy, and message contract.
 6. Agent runs or asks Xan to run the admin initializer so Lazarus's controller public SSH key is implanted into Windows OpenSSH admin auth.
 7. Agent verifies SSH/Tailscale/comms through the meta-gateway hierarchy and performs situational-awareness mapping.
 8. Agent creates `init_res.zip` and sends it to Xan for Lazarus/Wilson ingestion.
@@ -57,7 +58,7 @@ This will:
 - back up existing `C:\ProgramData\ssh\administrators_authorized_keys`
 - replace `administrators_authorized_keys` with Lazarus's Ed25519 controller public key
 - harden ACLs to `Administrators:F` and `SYSTEM:F` only
-- install child-safe seed files and common skills, including storage-explorer, image-gen, meta-gateway, and media acquisition skills
+- install child-safe seed files, common skills, and helpers, including storage-explorer, image-gen, screenshot, meta-gateway, and media acquisition skills
 
 Important: this deliberately uses the Windows admin OpenSSH key file, not `%USERPROFILE%\.ssh\authorized_keys`, because LilJon's Windows account is admin-class and sshd may ignore per-user keys.
 
@@ -115,3 +116,8 @@ Situational awareness is programmatic: drive maps, bounded path maps, installed 
 ssh <windows-user>@100.76.137.32 hostname
 ssh -p 2222 <wsl-user>@100.76.137.32 'uname -a && whoami'
 ```
+
+
+## Helper Convention
+
+Reusable copied scripts are called **helpers** and live under `C:\Users\santi\Documents\Hermes\helpers\<skill-or-domain>\`. `init.zip` includes a top-level `helpers/` directory and the initializer installs those helpers into the child machine Documents Hermes helper root. Skill-bundled scripts may still exist for portability, but user/agent executable copies should be staged here.

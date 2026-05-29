@@ -39,6 +39,11 @@ default_shared_skills:
   - get-movie
   - get-show
   - get-music
+  - screenshot
+helpers:
+  canonical_root: C:\Users\santi\Documents\Hermes\helpers
+  rule: reusable copied scripts are called helpers and are organized under helpers/<skill-or-domain>/
+  package_path: helpers/
 classes:
   core-common:
     child_import_default: true
@@ -75,7 +80,7 @@ init_protocol:
     - receive_init_zip_from_xan_or_lazarus
     - extract_and_read_init_prompt_md
     - verify_controller_update_or_get_explicit_xan_override
-    - transplant_child_safe_skills_preferences_scripts_plugin_notes_shared_memory_seeds_sync_policy_and_message_contract
+    - transplant_child_safe_skills_preferences_helpers_plugin_notes_shared_memory_seeds_sync_policy_and_message_contract
     - run_or_request_admin_init_py_to_implant_lazarus_public_ssh_key
     - verify_windows_ssh_acls_tailscale_ports_and_optional_wsl_ssh
     - collect_situational_awareness_maps_system_tests_and_comms_state

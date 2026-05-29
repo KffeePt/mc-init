@@ -47,6 +47,11 @@ echo "Copying default skills..."
 mkdir -p "$INIT_DIR/skills/core-common"
 cp -r "$REPO_ROOT/defaults/core-common/"* "$INIT_DIR/skills/core-common/"
 
+# Copy helpers
+echo "Copying helpers..."
+mkdir -p "$INIT_DIR/helpers"
+cp -r "$REPO_ROOT/helpers/"* "$INIT_DIR/helpers/" 2>/dev/null || true
+
 # Copy protocol
 echo "Copying protocol..."
 mkdir -p "$INIT_DIR/protocol"
@@ -82,7 +87,8 @@ cat > "$INIT_DIR/controller_update.json" << EOF
     "storage-explorer",
     "get-movie",
     "get-show",
-    "get-music"
+    "get-music",
+    "screenshot"
   ],
   "scope": "Update default skills and seeds for child agent bootstrap"
 }

@@ -15,7 +15,7 @@ Expected flow:
 1. A fresh child agent receives `init.zip` from Xan or Lazarus/Wilson.
 2. Xan instructs the fresh agent: `read init_prompt.md and do whatever it says.`
 3. The fresh agent extracts `init.zip`, opens `init/init_prompt.md`, and treats it as the active first-class control document only because Xan/Lazarus supplied it.
-4. The agent transplants child-safe operating material from the package: shared preferences, SOUL/general behavior seed, shared memory seed files, child-safe skills including meta-gateway, helper scripts bundled inside those skills, plugin/config notes if present, sync policy, and message contract.
+4. The agent transplants child-safe operating material from the package: shared preferences, SOUL/general behavior seed, shared memory seed files, child-safe skills including meta-gateway, helpers from `helpers/` plus any helper scripts bundled inside skills, plugin/config notes if present, sync policy, and message contract.
 5. The agent tells Xan to run the admin initializer command if it cannot run elevated commands itself. The command implants Lazarus's controller **public** SSH key into the Windows administrator OpenSSH authorized-keys file, hardens ACLs, starts SSH, and installs the child-safe seed files.
 6. Once SSH key implantation is done, the agent runs verification: Windows SSH status, ACLs, Tailscale reachability, local ports, and any WSL SSH steps Xan requested.
 7. The agent performs situational awareness: drive maps, bounded path maps, installed programs, content-type summaries, system identity, network/Tailscale state, service state, and communication readiness.
@@ -71,12 +71,28 @@ All cross-agent SSH, SCP, command execution, file transfer, registry updates, an
 
 Any cross-agent operation must carry a request envelope with: request ID, origin, target, operation type, intent, exact scope, risk level, approval source, expected output, rollback/stop condition, and secrets policy. Destructive actions, credential export, private-key transfer, raw env export, browser profile transfer, public firewall exposure, persistence/autostart changes, and subordinate canonical-registry overwrites require explicit Xan approval.
 
+## Helper convention
+
+Reusable copied scripts are called **helpers**, not random scripts. The canonical child-machine helper root is:
+
+```text
+C:\Users\santi\Documents\Hermes\helpers\
+```
+
+Organize helpers by skill or domain:
+
+```text
+helpers\<skill-or-domain>\<helper-file>
+```
+
+A skill may still bundle `scripts/` or `templates/` for portability, but if the helper is meant for user/agent execution or copying, it should also be present under `helpers/` and installed into the Documents Hermes helper root.
+
 ## Security boundary
 
 - The main machine is the only machine that owns reusable init/bootstrap skills.
 - This laptop may run this one-time initializer package only when sent or approved by Xan or Lazarus.
 - Do not copy or create reusable init skills on the laptop.
-- Install only child-safe common/comms material: preferences, SOUL seed, plan-mode, get-artifact, storage-explorer, image-gen, meta-gateway, media acquisition skills (`get-movie`, `get-show`, `get-music`), sync policy, and message contract.
+- Install only child-safe common/comms material: preferences, SOUL seed, plan-mode, get-artifact, storage-explorer, image-gen, screenshot, meta-gateway, media acquisition skills (`get-movie`, `get-show`, `get-music`), helpers under `Documents\Hermes\helpers`, sync policy, and message contract.
 - Do not expose SSH to the public internet.
 - Prefer Tailscale/private network access.
 - Do not print secrets, tokens, private keys, cookies, or raw credential files.
@@ -100,7 +116,7 @@ Required actions:
    py .\init.py verify-controller-update --manifest .\controller_update.json --signature .\controller_update.sig
    ```
    If this fails, stop before applying customized privileged actions and ask Xan/Lazarus for a corrected package.
-3. Transplant child-safe shared material, including the meta-gateway hierarchy/routing policy by running the Windows SSH bootstrap from elevated PowerShell:
+3. Transplant child-safe shared material, including helpers under `Documents\Hermes\helpers` and the meta-gateway hierarchy/routing policy by running the Windows SSH bootstrap from elevated PowerShell:
    ```powershell
    py .\init.py windows-ssh --replace-authorized-keys --install-seed-files
    ```
@@ -188,6 +204,20 @@ Then run/paste the emitted block inside laptop WSL.
 
 8. After setup, report using `seeds/Agent Message Contract.md`.
 
+## Default response format
+
+Use this response shape by default unless Xan requests a different format:
+
+1. `Plan`
+2. `Clarification Questions` — include only when the request is ambiguous and there is no reliable way to verify the missing truth with tools. Otherwise omit or say `None needed.`
+3. `Tools`
+4. `Work Done`
+5. `Remaining Work / Technical Debt`
+6. `TTS summary` — plain spoken text
+7. `TTS audio / artifacts` — attach audio-friendly MP3 and any generated artifacts
+
+Keep it concise. Do not fabricate tool output.
+
 ## Expected report
 
 Include:
@@ -197,6 +227,8 @@ Include:
 - whether child-safe seeds were installed
 - whether storage-explorer was installed as the shared common storage/drive situational-awareness skill
 - whether image-gen was installed as the shared common image generation/editing skill
+- whether screenshot was installed as the shared common screenshot helper skill
+- whether helpers were installed under `Documents\Hermes\helpers`
 - whether meta-gateway was installed as the shared hierarchy/comms/command-routing skill
 - whether `init_res.zip` was created and sent back
 - any failures with exact error output
