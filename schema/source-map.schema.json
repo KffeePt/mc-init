@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KffeePt/drawer/schema/source-map.schema.json",
+  "title": "Drawer Source Map",
+  "type": "object",
+  "required": ["schema", "agent_id", "computer_label", "roots"],
+  "properties": {
+    "schema": {"const": "hermes.drawer.source-map.v1"},
+    "agent_id": {"type": "string"},
+    "computer_label": {"type": "string"},
+    "updated_at": {"type": "string"},
+    "roots": {"type": "array", "items": {"type": "object"}}
+  }
+}

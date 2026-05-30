@@ -347,6 +347,34 @@ python3 /home/xantastique/.hermes/skills/media/media_search.py status --filter "
 
 Returns progress %, speed, ETA, seeds/peers for each torrent in qBittorrent.
 
+### Dead / Stalled Source Replacement
+
+The "dead little things" failure mode: qBittorrent keeps episode torrents in `metaDL`, `stalledDL`, waiting-for-peers, `0%`, size `0`, or no-seed states. These should be easy to detect and replace without hand-auditing every corpse.
+
+**Activation rule:** this is manual/opportunistic only. Do **not** run stalled-source detection as a scheduled/background sweep. Use it only when Xan explicitly asks for dead/stalled source detection or when another requested media task already involves checking qBittorrent/download status and stalled episode torrents are observed during that work.
+
+Use the stalled-source planner only under that activation rule:
+
+```bash
+python3 /home/xantastique/.hermes/skills/media/media_search.py stalled --filter "You" --limit 5
+python3 /home/xantastique/.hermes/skills/media/media_search.py stalled --filter "You" --json
+```
+
+Policy:
+1. Detect stalled episode torrents by progress/speed/seed/size state, especially metadata-only `0%` entries.
+2. Extract canonical show context from `save_path` first, not the polluted release title. This prevents short-title false positives like `YOU` matching episode titles from unrelated shows.
+3. Search replacements using exact `S##E##` plus title/year context.
+4. Reject wrong-title candidates even when they contain the same episode code or a word like `you` in the episode title.
+5. Rank candidates by preferred quality: 1080p sweet spot first, then high-quality source (`WEB-DL`/BluRay/REMUX), efficient codec (`x265/HEVC` preferred when comparable), healthy swarm, sane size, and known release group.
+6. Default behavior is detection/reporting only. Do not auto-add replacements just because stalled sources exist.
+7. If there is exactly one clear preferred candidate, it may be auto-added only when Xan explicitly asks to replace/add obvious stalled-source replacements, or when he has already delegated the surrounding media task and this replacement is an obvious part of completing it:
+
+```bash
+python3 /home/xantastique/.hermes/skills/media/media_search.py stalled --filter "Show Name" --auto-add-obvious
+```
+
+8. If there are multiple close candidates, weak swarms, no exact title match, lower-quality tradeoffs, or no obvious winner, present choices to Xan instead of guessing. Quality automation is good. Blind automation is how libraries become haunted.
+
 **Prerequisite:** qBittorrent Web UI must be running. If it fails with "not accessible", start qBittorrent:
 ```bash
 "C:\Program Files\qBittorrent\qBittorrent.exe" &
@@ -363,7 +391,7 @@ Xan wants post-download automation: **flatten nested torrent pack folders into f
 Two scripts deployed at `C:\\Users\\santi\\Documents\\Hermes\\Scripts\\`:
 
 1. **`qbittorrent-on-added.ps1`** — logs torrent additions to `qbittorrent-on-added.log`, maintains `qbittorrent-active.json` state file (Wilson reads this for situational awareness without polling qBittorrent API).
-2. **`qbittorrent-on-finished.ps1`** — marks completions in active.json, refreshes live qBittorrent telemetry, computes size/speed/ETA/seed reliability, decides whether to wait for near-finished torrents or flush completed groups, flattens nested pack folders into canonical `Season N (Year)` folders, moves sidecar files, removes empty dirs, refreshes the active Plex Shows section (currently section 2).
+2. **`qbittorrent-on-finished.ps1`** — marks completions in active.json, refreshes live qBittorrent telemetry, immediately flattens the completed show/movie root, schedules a debounced Plex refresh, moves sidecar files, removes empty dirs, and updates review state. Active/stalled siblings in a batch must not block flattening. Plex refresh is delayed into a 5-minute batch window so simultaneous completions produce one API refresh instead of a burst.
 
 The on-finished script handles:
 
@@ -373,7 +401,7 @@ The on-finished script handles:
 4. **Cleanup** — removes empty leftover nested folders
 5. **Plex refresh** — triggers refresh of the consolidated D:\Shows library (section mapping may need verification post-consolidation; legacy sections 2 + 6 are deprecated)
 
-The current smart on-finished script removes completed qBittorrent torrents with `deleteFiles=false` before flattening, then uses `Move-Item` into canonical season folders. This avoids seed-lock copy timeouts while keeping downloaded files. Logs to `qbittorrent-on-finished.log` in the same Scripts directory. Manual runner: `C:\Users\santi\Desktop\smart_org.bat`; legacy alias: `C:\Users\santi\Desktop\WILSON_Hash_Verify.bat` now runs the same smart organizer instead of hash-only verification.
+The current smart on-finished script removes each completed qBittorrent torrent with `deleteFiles=false` before flattening that item, then uses `Move-Item` into canonical season folders. This avoids seed-lock move failures while keeping downloaded files. It no longer lets active or stalled batch siblings delay flattening. Plex refreshes are debounced through a 5-minute window and then applied to the relevant Plex library section. Logs go to `qbittorrent-on-finished.log` in the same Scripts directory. Manual runner: `C:\Users\santi\Desktop\smart_org.bat`; legacy alias: `C:\Users\santi\Desktop\WILSON_Hash_Verify.bat` now runs the same smart organizer instead of hash-only verification.
 
 ### One-Time Setup
 
@@ -540,12 +568,16 @@ See `references/requested-show-batch-gap-fill.md` for the workflow when Xan prov
 See `references/qbittorrent-watchers-vs-flatten-hooks.md` for the important distinction between watcher completion and actual folder flattening; always verify filesystem shape before claiming show organization succeeded.
 See `references/post-flatten-collision-cleanup.md` for the replacement-bundle/collision-review cleanup pattern: keep newly downloaded media when requested, move loser files out of Plex with a manifest, then re-audit duplicates before refreshing Plex.
 See `references/smart-flattener-collision-verification.md` for the exact verification sequence when Xan asks whether the smart flattener worked after all downloads complete, especially with an explicit keep-new collision policy.
+See `references/you-2018-bad-flatten-gap-fill.md` for a concrete malformed-show cleanup pattern: season folder names lied, wrong-season files and duplicates had to be quarantined/moved before gap analysis, and short-title search required exact episode-title validation.
 See `references/selection-followthrough.md` for preserving option context across turns.
 See `references/qbittorrent-status-fallback.md` for the WSL-to-Windows PowerShell fallback for qBittorrent status.
 See `references/plex-section-single-copy-cleanup.md` for Plex `Shows` vs `More Shows` single-copy cleanup.
 See `references/plex-token-and-sections.md` for Plex API token retrieval and section mapping.
 See `references/powershell-wsl-pitfalls.md` for Copy-Item-over-robocopy, heredoc backslash bugs, and WSL→PowerShell quoting rules.
 See `references/qbittorrent-event-hooks.md` for the canonical shared-Hermes script location, qBittorrent GUI commands, state/log files, relocation checks, and event-driven hook behavior.
+See `references/per-success-flatten-plex-debounce.md` for the post-YOU correction: flatten every completed download immediately, but debounce Plex refreshes into a 5-minute batch window.
+See `references/stalled-source-replacement.md` for dead/stalled qBittorrent sources: detect `metaDL`/0%/0-seed episode torrents, search exact-title replacements, auto-add only one clear preferred candidate, and ask Xan when choices are ambiguous.
+See `references/completed-seeding-wrapper-manual-flatten.md` for the manual cleanup sequence when qBittorrent shows a completed/seeding torrent but the filesystem still contains a torrent-pack wrapper.
 See `templates/qbittorrent-flatten-refresh.ps1` for the original qBittorrent completion hook script template (flatten + Plex refresh). The deployed production versions are `qbittorrent-on-added.ps1` and `qbittorrent-on-finished.ps1` at `C:\Users\santi\Documents\Hermes\Scripts\`.
 
 ---
@@ -647,15 +679,19 @@ Do not encode this as “qBittorrent is broken”; it is a host/WSL loopback con
 
 27. **Dead show on public trackers — when to stop digging.** If 3+ query variants (original name, year, alternative language terms, direct apibay API) all return only 0–3 seeder results with no bundles, the show is effectively dead on public indexers. Recommend: (a) shelve for now, (b) suggest private tracker/Usenet/direct download sources, (c) flag as a candidate for later re-check. Do not keep searching indefinitely — the data isn't going to improve.
 
-28. **Strict title validation before adding.** Public indexers often return high-seed wrong-title bait for short/common show names. Example failure mode: searching `The Bear S04` returned `The Island With Bear Grylls`, which must be rejected even if it superficially contains `Bear` and a season token. Before selecting or adding, require the canonical show title tokens plus the requested season/episode token; if no exact-title result exists, search individual episodes rather than accepting a wrong-series season pack.
+28. **Strict title validation before adding.** Public indexers often return high-seed wrong-title bait for short/common show names. Example failure modes: searching `The Bear S04` returned `The Island With Bear Grylls`; searching `You.S03E04` surfaced `Have I Got News For You S03E04`. Reject wrong-series results even if they contain the requested word and episode token. Before selecting or adding, require canonical title boundary evidence plus the requested season/episode token; for ambiguous short titles, add the year and episode title (`You S03E04 Hands Across Madre Linda`) rather than trusting a bare title/code query. If no exact-title result exists, search individual episodes with title anchors rather than accepting a wrong-series season pack.
 
 29. **Requested-batch precheck includes duplicate detection.** When Xan gives a list of shows/seasons to fetch, first verify every requested show folder exists exactly once under `D:\\Shows`, then scan those folders for duplicate episode codes. Report empty folders separately from missing folders. Do not add torrents until duplicate suspects are either left intentionally or cleaned under a hash/quality policy.
 
-30. **Watcher completion is not flatten verification.** `watch_batch.py` can mark torrents complete, scan, and refresh Plex while files remain at the show root or inside torrent wrapper directories. Current watcher logic must resolve the real media root from qBittorrent `save_path` / `content_path` first, then extract Plex-style identity from folder/filename conventions (`Show Title (Year)` plus `S##E##`) before scan/flatten. Do not rely on fuzzy torrent-title matching; release names are polluted and will miss folders. After every completed show batch, inspect `D:\\Shows\\<Show Title (Year)>` for root-level episodes and non-season wrapper folders. If present, flatten manually or patch the post-completion flow before reporting success. See `references/qbittorrent-watchers-vs-flatten-hooks.md`.
+30. **Watcher completion is not flatten verification.** `watch_batch.py` can mark torrents complete, scan, and refresh Plex while files remain at the show root or inside torrent wrapper directories. Current watcher logic must resolve the real media root from qBittorrent `save_path` / `content_path` first, then extract Plex-style identity from folder/filename conventions (`Show Title (Year)` plus `S##E##`) before scan/flatten. Do not rely on fuzzy torrent-title matching; release names are polluted and will miss folders. After every completed show batch, inspect `D:\\Shows\\<Show Title (Year)>` for root-level episodes and non-season wrapper folders. If present, flatten manually or patch the post-completion flow before reporting success. While downloads are still active, root-level files and wrapper folders are expected landing-zone artifacts; do not treat them as final layout until qBittorrent reports completion and flattening has run. If qBittorrent reports the torrent as complete/seeding/uploading but the wrapper remains, remove the torrent with `deleteFiles=false`, move the media into the canonical season folder, remove empty wrappers, then re-audit before claiming success. See `references/qbittorrent-watchers-vs-flatten-hooks.md` and `references/completed-seeding-wrapper-manual-flatten.md`.
 
 30a. **Post-flatten duplicate/collision cleanup is a separate verification gate.** A hook can remove wrappers and still leave duplicate `S##E##` files, old release-group copies, alternate season-year folders, or `__COLLISION_REVIEW` suffixes. When the replacement policy is clear, especially “keep the newly downloaded media,” prefer the new/remote file using collision metadata before heuristic evidence, move loser files out of Plex into a dated `D:\\HermesCleanup\\...` backup or configured review/archive location with a manifest, then re-audit until duplicate groups and collision leftovers are zero. Preserve no-code Specials unless explicitly in scope. See `references/post-flatten-collision-cleanup.md` and `references/smart-flattener-collision-verification.md`.
 
-31. **Strict all-active batch barriers can block completed shows.** A JSON registry that defers flattening while *any* show torrent remains active is safe but too blunt: one slow download, e.g. a long-tail season pack, can prevent completed roots from being flattened and scanned. Prefer an adaptive scheduler: record size/progress/speed/qBittorrent ETA/seeds/peers per info hash, compute reliability and ETA groups, wait only for near-finished reliable items, and flush completed roots when remaining active items are long-tail or stalled. Never flatten active content paths; rank torrent jobs for scheduling only, not episode files for layout.
+31. **Strict all-active batch barriers must not block flattening.** A JSON registry may record active/finished torrent state, but completion handling must flatten the completed root immediately after removing the completed torrent with `deleteFiles=false`. Use batching only to debounce expensive Plex refreshes. Current policy: if completion metadata timestamps are within a 5-minute window, schedule one Plex refresh at the end of that window; if later completions arrive outside the window, schedule a new refresh. Never flatten active content paths; active torrents are only telemetry for scheduling refreshes and operator awareness, not blockers for organizing completed media.
+
+32. **Short-title wrapper resolution needs title/year fuzzy matching.** Before treating `D:\\Shows\\<first path segment>` as the show root, check whether the segment is a release wrapper such as `YOU (2018) Season 01 ...`. If so, prefer an existing canonical folder inferred from title/year, e.g. `D:\\Shows\\You (2018)`. For very ambiguous titles, use exact year/title evidence first; IMDb/Hermes-CLI assisted command generation is a last-resort fallback, not the normal path.
+
+33. **Dead little things: stalled sources need explicit replacement handling.** qBittorrent `metaDL`/waiting-for-peers/0-byte/0-seed episode torrents should be detected as dead candidates and run through `media_search.py stalled --filter "Show"`. Replacement selection should prefer max practical quality with minimal loss: 1080p sweet spot, WEB-DL/BluRay/REMUX over low-grade sources, x265/HEVC when comparable, healthy swarm, sane size, trusted group. Never auto-add wrong-title or ambiguous short-title matches. If the top candidate is weak or multiple candidates are close, ask Xan to choose between sources instead of guessing. Use `--auto-add-obvious` only for a single clear preferred replacement.
 
 ---
 

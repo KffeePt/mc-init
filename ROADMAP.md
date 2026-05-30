@@ -75,3 +75,13 @@ A skill should be a default only if:
 | 2026-05-27 | Initial roadmap; added `git-gh` as default | Wilson |
 | 2026-05-26 | Upgraded `storage-explorer` to v2.2.0 (omni-utility) | Wilson |
 | 2026-05-25 | Added `file-organization`, `omni-qa`, `orchestration` as defaults | Wilson |
+
+
+## Drawer Remote State Protocol
+
+- `drawer` repo: `git@github.com:KffeePt/drawer.git`.
+- `main` is controller-only.
+- Subordinates use `drawer/<group>/<agent-name>-<computer-label>`.
+- Git drawer is fallback async comms/state when direct SSH/Tailscale/Hermes gateway is unavailable.
+- Conflicts stall scheduled sync, write `.drawer/conflict.json`, and notify Xan/controller instead of auto-resolving.
+- `sb-init` is the subordinate-safe init skill; `mc-init` remains controller-only.

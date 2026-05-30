@@ -8,7 +8,7 @@ platforms: [windows, wsl, linux]
 metadata:
   hermes:
     tags: [multi-agent, gateway, ssh, scp, hierarchy, registry, controller, tailscale]
-    related_skills: [hermes-agent, orchestration, storage-explorer, file-organization, omni-qa]
+    related_skills: [hermes-agent, orchestration, storage-explorer, file-organization, omni-qa, git-gh, mc-init, tailscale-homelan]
 ---
 
 # Meta-Gateway
@@ -32,13 +32,25 @@ All SSH, SCP, command execution, file transfer, registry updates, and communicat
 
 Wilson/Lazarus may initiate scoped remote action requests to Arby/LilJon and future subordinate Hermes agents. The subordinate executes only the stated non-destructive or already-approved scope, then reports status, artifacts, blockers, and verification back through the controller so Xan sees the work in Telegram. This prevents subordinate work from becoming headless.
 
+### Control Channel (Auto-Execute)
+
+For init updates, system config changes, and service control, Wilson sends messages with `"channel": "control"` to Arby's inbox. These are auto-processed by the `control-channel-watcher` systemd service running on Arby/LilJon.
+
+Control channel messages:
+- Require `"channel": "control"` field
+- Must pass verification (origin, approval_source, secrets_policy, required fields)
+- Auto-trigger: init.zip extraction, `init.py approved-init`, skill verification, service restart
+- Results are logged to journal and queued as `control_result_*.json` in comms_pending
+
+Regular comms messages (no `channel` field or `channel: "comms"`) are routed to `comms_pending/` for the agent to read manually. The watcher never auto-executes comms messages.
+
 Flow:
 
-1. Wilson/Lazarus creates a request envelope with exact scope, risk, approval source, expected output, stop condition, and secrets policy.
-2. Wilson sends the request by the approved comms transport: SSH/SCP mailbox, Shared Drawer bundle, Taildrop, or direct Hermes/gateway delivery when configured.
-3. Arby executes only the scoped request; it refuses destructive/security-sensitive expansion without Xan approval.
-4. Arby writes a result report and any artifacts, then notifies Wilson.
-5. Wilson relays user-visible status/results to Xan via Telegram. Long subordinate actions must produce progress or a final report; silent background work is not acceptable.
+1. Wilson/Lazarus creates a request envelope with `"channel": "control"` and exact scope.
+2. Wilson sends via SCP/SSH to Arby's Windows inbox at `C:\Users\santi\Documents\Hermes\Comms\arby\inbox\`.
+3. The control-channel-watcher picks it up within 15 seconds.
+4. Watcher verifies the message, executes allowed actions, logs results.
+5. Results and notifications are queued for the Hermes agent to relay to Xan via Telegram.
 
 Allowed without fresh approval when covered by existing setup policy: status checks, diagnostics, non-destructive verification, artifact creation, init/update application, and file-transfer tests. Still approval-gated: destructive actions, credential export, private-key transfer, raw env transfer, browser profile transfer, public firewall exposure, and persistence/autostart changes.
 
@@ -173,7 +185,10 @@ Registry classes:
 
 ## Init Integration
 
-Every `init.zip` sent to a child agent should include this skill as a child-safe common skill.
+Every `init.zip` sent to a child agent should include this skill as a child-safe common skill. Init packages are built and published from the central `mc-init` system at `~/Documents/Hermes/Init/` (repo: `https://github.com/KffeePt/mc-init`).
+
+Build: `bash scripts/build-init.sh [version_tag]` — produces `versions/current/init.zip`.
+Publish: `bash scripts/publish-init.sh arby [version_tag]` — builds, SCPs, verifies hash, and sends a JSON coordination envelope to Arby's inbox.
 
 Fresh-agent flow:
 

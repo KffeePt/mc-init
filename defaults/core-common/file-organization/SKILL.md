@@ -54,18 +54,38 @@ Primary objective: produce safe, reversible organization. Do not turn cleanup in
 
 7. **Media folders are not automatically cleanup targets.**
    - Leave normal media folders in place unless Xan asks otherwise.
+   - For movie libraries, preferred Plex-friendly folder shape is `D:\Movies\Movie Title (Year)\<media files>`. When asked to normalize movies, generate a manifest + restore script, move only confidently parsed title/year entries, and leave ambiguous loose files in review rather than inventing years. See `references/2026-05-27-movies-folder-normalization.md`.
    - Flag out-of-place files inside media folders: saved web page debris, scripts, archives, datasets, non-media config, and obvious junk.
    - Treat `desktop.ini` as Windows metadata noise, not a cleanup win.
    - For saved browser pages in image folders, move the `.htm/.html` file and its matching asset folder (`<name> Archivos`, `<name>_files`, etc.) together into review/debris; do not delete individual assets because the HTML may reference them.
    - Zero-byte screenshots/images are safe deletion candidates **after approval**, but log them; there is no useful restore payload because they are empty.
    - Data files found in media folders, e.g. `.npy`, should move to a review/data-artifacts bucket rather than being treated as pictures.
 
-8. **Generate restore paths/scripts before execution.**
+8. **Plex TV library rename normalization.**
+   - When cleaning torrent-imported TV folders, prefer Plex's live physical `Location` metadata as the authority for show title/year rather than regex-only cleanup of release names.
+   - Target top-level show folder format: `Show Title (Year)`.
+   - Target second-level format: `Season N (Year)` or `Specials (Year)`; do not leave `S1`, `S01`, raw torrent pack folders, or `Season 01 - Extras` when the user asks for manual normalization.
+   - Generate a manifest and restore script before mutation; then apply ready renames, merge/flatten malformed season folders without overwriting, and verify the final tree.
+   - If qBittorrent flatten hooks exist, patch them after the manual cleanup so future downloads create/reuse the same `Season N (Year)` folders instead of reintroducing `S1`/`S2`.
+   - For manual catch-up flattening while torrents are still active, query qBittorrent's structured API first and build an incomplete/content-path exclusion set. Move only completed show roots; skip `.part` files, active content paths, and any root currently tied to an incomplete torrent.
+   - Do not force movie-shaped items in Shows into fake season folders; report them as follow-up moves/review instead.
+
+9. **Generate restore paths/scripts before execution.**
    - For actual move passes, create a manifest and restore script before moving.
    - For manifest-driven moves, also create an apply script that defaults to dry-run and requires an explicit execution flag.
    - Split move statuses into `ready`, `review_before_move`, `collision_review_required`, and `source_missing`; when Xan says “move ready files,” execute only `ready` entries and leave review items untouched.
    - Skip collisions rather than overwrite.
    - Verify post-move: destination exists and source is gone for ready items; review-required items still exist at their original source.
+
+9. **Media automation hooks need adaptive batch barriers.**
+   - For qBittorrent/Plex show automation, do not flatten on every individual `torrent finished` event when multiple concurrent downloads may belong to the same show/batch.
+   - Use a JSON hashmap registry updated by `torrent added`, keyed by info hash, and guard registry reads/writes with a Windows global mutex; qBittorrent can launch hooks concurrently.
+   - Do not rely on a blunt “wait until every active torrent finishes” barrier. Store size/progress/speed/qBittorrent ETA/seeds/peers/availability, compute reliability and ETA groups, then decide whether to wait briefly or flush completed roots now.
+   - Flush completed roots when remaining active torrents are long-tail or stalled; wait only when all remaining active items are near-finished and reliable. This prevents a slow torrent from blocking completed library updates.
+   - Prefer qBittorrent content path over save path when resolving a show root, hard-refuse to flatten `D:\Shows` itself, and explicitly exclude active/incomplete content paths.
+   - Sort/rank torrent jobs by ETA/size/reliability for scheduling only; never arrange Plex media files by size.
+   - Query Plex library sections live before hardcoding refresh IDs; stale section IDs silently become 404s.
+   - See `references/2026-05-27-qbittorrent-batch-flatten-hooks.md` for the baseline registry shape and `references/2026-05-28-qbittorrent-adaptive-flatten-batching.md` for the adaptive scheduler pattern.
 
 9. **Rename folders cautiously.**
    - User-facing organization folders should use spaces, not underscores, for legibility.
@@ -263,6 +283,10 @@ Summary.txt
 ## Reference Material
 
 - `references/2026-05-23-approved-dedup-and-venv-cleanup.md` — approved deletion execution pattern for exact-hash duplicate archives and rebuildable Python virtual environments: re-hash before deletion, verify survivors, separate reclaimed-space accounting, and compact final reporting.
+- `references/2026-05-27-qbittorrent-batch-flatten-hooks.md` — qBittorrent/Plex show automation pattern: torrent-added JSON hashmap registry, mutex-protected batch barrier, defer-until-all-finished flattening, show-root safety checks, name-cleanup regex pitfalls, live Plex section verification.
+- `references/2026-05-28-qbittorrent-adaptive-flatten-batching.md` — adaptive improvement to strict batch barriers: rank torrents by size/progress/speed/ETA/seeds/peers, flush completed roots when remaining active torrents are long-tail/stalled, and never let incomplete content paths be flattened.
+- `references/2026-05-27-media-library-precheck-and-routing.md` — mixed movie/show acquisition lessons: explicit qBittorrent categories, path-root fallback, pre-add folder/duplicate checks, and wrong-title indexer bait rejection.
+- `references/2026-05-27-plex-shows-folder-rename-normalization.md` — Plex TV library cleanup pattern: top-level `Show Title (Year)`, second-level `Season N (Year)`, manifest/restore discipline, malformed torrent folder flattening, hook update to prevent regressions.
 - `references/2026-05-26-pop-backup-certain-trash-removal.md` — stale backup cleanup pattern for conservative certain-trash remove lists, guarded PowerShell deletion, manifest re-check verification, and empty-directory follow-up.
 - `references/2026-05-26-pop-backup-downloads-review-buckets.md` — stale backup review-bucket marking pattern: derive from latest manifest, mark Downloads installer/runtime packages for approval-only deletion, preserve explicit keep buckets such as server backups, and separate extracted app payloads from installer files.
 - `references/2026-05-26-pop-backup-downloads-deletion.md` — approved stale-backup Downloads deletion pattern: exact target guard, pre-delete manifest, result JSON, server-backup preservation, and category-separated reclaim accounting.

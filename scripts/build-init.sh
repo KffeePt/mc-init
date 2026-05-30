@@ -52,10 +52,12 @@ echo "Copying helpers..."
 mkdir -p "$INIT_DIR/helpers"
 cp -r "$REPO_ROOT/helpers/"* "$INIT_DIR/helpers/" 2>/dev/null || true
 
-# Copy protocol
+# Copy protocol and schemas
 echo "Copying protocol..."
 mkdir -p "$INIT_DIR/protocol"
 cp "$REPO_ROOT/protocol/"* "$INIT_DIR/protocol/" 2>/dev/null || true
+mkdir -p "$INIT_DIR/schema"
+cp "$REPO_ROOT/schema/"* "$INIT_DIR/schema/" 2>/dev/null || true
 
 # Create empty init trigger file
 touch "$INIT_DIR/init"
@@ -76,19 +78,7 @@ cat > "$INIT_DIR/controller_update.json" << EOF
   "repo": "mc-init",
   "content_hash": "$SHA256",
   "default_skills": [
-    "file-organization",
-    "get-artifact",
-    "git-gh",
-    "image-gen",
-    "meta-gateway",
-    "omni-qa",
-    "orchestration",
-    "plan-mode",
-    "storage-explorer",
-    "get-movie",
-    "get-show",
-    "get-music",
-    "screenshot"
+$(find "$REPO_ROOT/defaults/core-common" -mindepth 1 -maxdepth 1 -type d -printf '    "%f",\n' | sed '$ s/,$//')
   ],
   "scope": "Update default skills and seeds for child agent bootstrap"
 }

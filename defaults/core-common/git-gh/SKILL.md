@@ -212,6 +212,21 @@ gh search prs "<query>"                           # Search PRs
 
 ## Common Workflows
 
+### Windows Desktop TUI + Scheduled Checkpoints
+
+For Windows-host Desktop repos with ad-hoc `.bat` Git launchers, prefer consolidating into one human Git TUI plus one unattended checkpoint mode instead of keeping multiple destructive scripts scattered on Desktop.
+
+Use the detailed pattern in `references/windows-desktop-git-tui-autocheckpoint.md`.
+
+Key rules:
+
+- Ensure `origin` exists before `git remote set-url`; absent remotes make scheduled sync fail in ugly, preventable ways.
+- Keep scheduled-sync logs outside the tracked repo or ignore them before the first checkpoint. A sync script that writes tracked logs dirties its own working tree. Little ouroboros. Bad pet.
+- Scheduled/autonomous checkpointing may commit, tag, fetch, rebase, and push, but must not hard-reset or force-push.
+- Destructive human actions such as force reset, rollback, branch deletion, and force push require typed confirmation, not a single-key menu choice.
+- Checkpoint rollback should use timestamped tags such as `checkpoint/yyyyMMdd-HHmmss` and a retention window, commonly 31 days for “about a month.”
+- If an autosync conflict branch is created during recovery, deleting it is still destructive; stop for approval if confirmation is unavailable or times out.
+
 ### New Feature (branch → PR → merge)
 ```bash
 git switch -c feature/name
@@ -237,6 +252,20 @@ git merge upstream/main
 git push origin main
 ```
 
+### Personal/Desktop State Repo with Remote Checkpoints
+
+Use this pattern when a user wants a clutter-prone folder, such as a Desktop, backed by Git without tracking every random file:
+
+1. **Use a reverse-whitelist `.gitignore`.** Ignore `*` by default, then explicitly unignore only canonical launchers, docs, config, and script trees. Re-ignore logs/status/temp/archive outputs even inside whitelisted trees.
+2. **Remove noncanonical tracked files from Git without deleting them from disk.** Use `git rm --cached` for tracked clutter; verify with `git ls-files` and `git status --ignored --short`.
+3. **Create checkpoint commits and tags.** Use timestamped tags such as `checkpoint/YYYYMMDD-HHMMSS` and push both the branch and tags to the remote.
+4. **Retention belongs in the checkpoint script.** Prune old `checkpoint/*` tags locally and remotely after the desired rollback window.
+5. **Scheduled autosync must never hard reset.** It may stage/commit/tag/push. If fetch/pull/rebase fails, preserve the local checkpoint and exit loudly; do not switch branches or create conflict branches unless the remote is reachable and the conflict-preservation push can succeed.
+6. **Destructive interactive actions require typed confirmation.** Single-key menus are fine for safe actions, but force reset, rollback, key regeneration, branch deletion, and scheduled-task deletion need explicit typed tokens.
+7. **Validate the remote before trusting autosync.** `git remote -v` is not enough; check that the repo exists and is reachable (`gh repo view`, `git ls-remote`, or equivalent). Empty newly-created remotes need first-push handling rather than a blind `pull --rebase`.
+
+Reference: `references/desktop-state-checkpoint-repo.md` captures the detailed workflow and pitfalls from Xan's Desktop TUI/checkpoint setup.
+
 ### Resolve Merge Conflict
 ```bash
 git merge <branch>                                # Conflict occurs
@@ -257,13 +286,13 @@ git commit                                        # Complete merge
 ## Common Pitfalls
 
 1. **Force push to main/master.** Never `git push --force` to shared branches without explicit approval. Use `--force-with-lease` as a safer alternative.
-2. **Committing secrets.** Always check diffs before committing. Use `.gitignore` to exclude `.env`, keys, tokens, and credential files.
+2. **Committing secrets.** Always check diffs before committing. Use `.gitignore` to exclude `.env`, keys, tokens, and credential files. When committing generated archives or copied helper scripts, scan both staged text and archive contents for concrete credentials before commit. If you sanitize a helper after building an archive, rebuild the archive and rescan it before committing. A clean source tree with a dirty ZIP is still a leak; it just wears a little compressed hat.
 3. **Large files.** Don't commit files > 100MB. Use Git LFS or `.gitignore`. GitHub rejects pushes with files > 100MB.
 4. **Merge commit spam.** Prefer squash-merge for feature branches, rebase for clean history on personal branches.
 5. **gh auth tokens in scripts.** Never hardcode `gh auth token` output in scripts. The `gh` CLI manages tokens automatically once logged in.
 6. **Detached HEAD.** If you see "detached HEAD" after checking out a tag or commit, create a branch to save work: `git switch -c new-branch-name`.
 7. **Stale remotes.** After deleting a remote branch, run `git remote prune origin` to clean local tracking references.
-8. **gh CLI not installed.** Install from WSL: `sudo apt install gh` or download from https://cli.github.com/. Authenticate with `gh auth login`.
+8. **Windows scheduled Git sync quirks.** In Windows PowerShell scheduled-task scripts, validate the exact `RunLevel` enum (`Limited` or `Highest`; not informal names like `LeastPrivilege`) and parse-check scripts before registering the task. For Desktop repos, confirm `origin` exists and generated logs are ignored/outside the repo before the first automated checkpoint run.
 
 ## Verification Checklist
 

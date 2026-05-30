@@ -52,8 +52,10 @@ If migrating from an older location, copy scripts, logs, and active JSON state t
 ## Behavior contract
 
 - On added: log torrent name/path/category, update `qbittorrent-active.json`.
-- On finished: remove torrent from active state, flatten show-pack folders into `S1/`, `S2/`, etc., move sidecars with episodes, remove empty wrappers, refresh Plex section 6 (`More Shows` → `D:\Shows`).
-- Use `Copy-Item -LiteralPath` for qBittorrent-seeded files, not `Move-Item`.
+- On finished: **flatten the completed item immediately**. Active batch siblings must not block filesystem organization. This avoids the YOU failure mode where one completed season stayed in a wrapper because unrelated gap-fill torrents were still active/stalled.
+- Plex refresh is debounced, not immediate-per-file: completion events whose metadata timestamps fall inside the same 5-minute window share one delayed Plex library refresh. Events outside that window create a new refresh window. This prevents Plex API bombardment when many torrents finish together while still keeping flattening per-success.
+- Root resolution should prefer canonical `D:\Shows\Title (Year)` folders using title/year fuzzy matching before treating release-wrapper names like `Title (Year) Season 01 ...` as show roots. For short ambiguous titles like `YOU`, require year/title evidence where possible.
+- Use `Copy-Item -LiteralPath` for qBittorrent-seeded files when files are still locked; direct `Move-Item` is acceptable only after the hook removes the completed torrent with `deleteFiles=false`.
 - Parse-verify PowerShell scripts with `[System.Management.Automation.Language.Parser]::ParseFile()` after edits.
 
 ## Verification after relocation

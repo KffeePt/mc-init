@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KffeePt/drawer/schema/agent-identity.schema.json",
+  "title": "Drawer Agent Identity",
+  "type": "object",
+  "required": ["schema", "role", "agent_id", "computer_label", "branch"],
+  "properties": {
+    "schema": {"const": "hermes.drawer.agent.v1"},
+    "role": {"enum": ["controller", "subordinate"]},
+    "agent_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "computer_label": {"type": "string"},
+    "branch": {"type": "string"},
+    "updated_at": {"type": "string"}
+  }
+}

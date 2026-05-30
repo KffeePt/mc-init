@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KffeePt/drawer/schema/drawer-message.schema.json",
+  "title": "Drawer Message",
+  "type": "object",
+  "required": ["schema", "message_id", "from", "to", "created_at", "kind", "body"],
+  "properties": {
+    "schema": {"const": "hermes.drawer.message.v1"},
+    "message_id": {"type": "string"},
+    "from": {"type": "string"},
+    "to": {"type": "string"},
+    "created_at": {"type": "string"},
+    "ttl_seconds": {"type": "integer", "minimum": 1},
+    "requires_ack": {"type": "boolean"},
+    "kind": {"enum": ["command", "status", "artifact-request", "artifact-ready", "scp-plan", "ack", "conflict"]},
+    "body": {"type": "object"},
+    "signature": {"type": "string"}
+  }
+}

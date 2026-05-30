@@ -168,3 +168,13 @@ git push origin main
 ## Helper Convention
 
 Reusable copied scripts are called **helpers** and live under `C:\Users\santi\Documents\Hermes\helpers\<skill-or-domain>\`. `init.zip` includes a top-level `helpers/` directory and the initializer installs those helpers into the child machine Documents Hermes helper root. Skill-bundled scripts may still exist for portability, but user/agent executable copies should be staged here.
+
+
+## Drawer Remote State Protocol
+
+- `drawer` repo: `git@github.com:KffeePt/drawer.git`.
+- `main` is controller-only.
+- Subordinates use `drawer/<group>/<agent-name>-<computer-label>`.
+- Git drawer is fallback async comms/state when direct SSH/Tailscale/Hermes gateway is unavailable.
+- Conflicts stall scheduled sync, write `.drawer/conflict.json`, and notify Xan/controller instead of auto-resolving.
+- `sb-init` is the subordinate-safe init skill; `mc-init` remains controller-only.

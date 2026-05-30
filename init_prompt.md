@@ -242,3 +242,13 @@ Include:
 - Do not sync local/private skills globally.
 - Do not copy main-machine secrets wholesale.
 - Do not claim access works until verified.
+
+
+## Drawer Remote State Protocol
+
+- `drawer` repo: `git@github.com:KffeePt/drawer.git`.
+- `main` is controller-only.
+- Subordinates use `drawer/<group>/<agent-name>-<computer-label>`.
+- Git drawer is fallback async comms/state when direct SSH/Tailscale/Hermes gateway is unavailable.
+- Conflicts stall scheduled sync, write `.drawer/conflict.json`, and notify Xan/controller instead of auto-resolving.
+- `sb-init` is the subordinate-safe init skill; `mc-init` remains controller-only.

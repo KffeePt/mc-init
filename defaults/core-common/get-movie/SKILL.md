@@ -121,6 +121,7 @@ Choose the presentation depth based on request shape:
 - **Single-title request:** show concrete torrent/release options before downloading unless Xan explicitly asked for automatic selection. Include source, trust signal, quality, size, seed/leech counts, and reject notes for risky entries.
 - **Batch / many-title request:** explain the broad acquisition options first — e.g. core franchise vs adjacent/completionist set, quality policy, skip rules, and what will not be downloaded. Then either ask for scope or, if Xan gave explicit scope and quality constraints, auto-select conservative 1080p reasonable-size releases and summarize the picks.
 - **Recommendations / adjacent titles:** explicitly verify each recommended title against `D:\\Movies\\` before recommending or queueing it. State `present`, `missing`, or `duplicate suspect` for each.
+- **Franchise / adjacent batch requests:** when Xan says `make sure I have`, `download all`, `adjacent`, `related`, or similar, do not silently choose the boundary. Inventory first, then present scope options: core franchise, adjacent/marketing-related, and broader completionist/recommendation set. If he asks for `options`, stop before queueing downloads and ask which scope to execute. See `references/franchise-adjacent-batch-acquisition.md`.
 
 The script outputs formatted results. Present them clearly:
 

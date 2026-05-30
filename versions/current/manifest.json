@@ -1,23 +1,29 @@
 {
-  "version": "2026-05-29-path-first-media-watchers",
-  "built_at": "2026-05-29T14:35:54Z",
+  "version": "drawer-sb-init-20260530",
+  "built_at": "2026-05-30T11:21:47Z",
   "builder": "Wilson/Lazarus",
   "repo": "mc-init",
-  "content_hash": "b8b1484394f18fde214886690323e1a18e3dd235c01a9459c40c27f971427368",
+  "content_hash": "42526bf8482b7e789b8ae5d8796e17ceef76e10a369de64bc762be8767f7f534",
   "default_skills": [
     "file-organization",
+    "file-tree-inspection",
     "get-artifact",
+    "get-movie",
+    "get-music",
+    "get-show",
     "git-gh",
     "image-gen",
+    "media-shared",
+    "media-transcoding-ffmpeg",
     "meta-gateway",
     "omni-qa",
     "orchestration",
     "plan-mode",
+    "sb-init",
+    "screenshot",
     "storage-explorer",
-    "get-movie",
-    "get-show",
-    "get-music",
-    "screenshot"
+    "tailscale-homelan",
+    "task-artifacts-delivery"
   ],
   "scope": "Update default skills and seeds for child agent bootstrap"
 }

@@ -1,6 +1,12 @@
-version: 4
+version: 5
 name: xan-agent-self-update-policy
-canonical_shared_drawer: C:\Users\santi\Documents\Hermes\Shared Drawer
+canonical_shared_drawer: git@github.com:KffeePt/drawer.git
+drawer:
+  repo: git@github.com:KffeePt/drawer.git
+  controller_branch: main
+  subordinate_branch_format: drawer/<group>/<agent-name>-<computer-label>
+  sync_policy: fetch_checkpoint_rebase_push
+  conflict_policy: stall_notify_wait
 agents:
   Lazarus:
     body_of: Wilson
@@ -31,15 +37,19 @@ default_shared_skills:
   - get-artifact
   - storage-explorer
   - file-organization
+  - file-tree-inspection
+  - task-artifacts-delivery
   - image-gen
   - git-gh
   - meta-gateway
   - omni-qa
   - orchestration
+  - tailscale-homelan
   - get-movie
   - get-show
   - get-music
-  - screenshot
+  - media-transcoding-ffmpeg
+  - sb-init
 helpers:
   canonical_root: C:\Users\santi\Documents\Hermes\helpers
   rule: reusable copied scripts are called helpers and are organized under helpers/<skill-or-domain>/
@@ -147,7 +157,7 @@ command_and_file_transfer_policy:
   subordinate_requests_allowed: true
   required_fields_for_file_transfer: [source, destination, purpose, overwrite_expected]
   required_fields_for_command_execution: [target_machine, command_intent, expected_output, risk_level]
-  allowed_transports: [ssh, sftp, scp, rsync_over_ssh, tailscale_taildrop]
+  allowed_transports: [ssh, sftp, scp, rsync_over_ssh, tailscale_taildrop, drawer_git]
   explicit_xan_approval_required_for:
     - destructive_commands
     - credential_export
